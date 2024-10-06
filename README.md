@@ -4,6 +4,8 @@ This project was forked from the open source Valkey which is forked from Redis p
 
 This README is just a fast _quick start_ document. We are currently working on a more permanent documentation page.
 
+## Note: It is still in development mode some of the feature might not work
+
 ## What is Valkey Serverless?
 
 Valkey Serverless is a high-performance Redis Compatible data structure server that primarily serves key/value workloads.
