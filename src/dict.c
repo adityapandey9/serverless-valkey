@@ -34,6 +34,7 @@
  */
 
 #include "fmacros.h"
+#include "c_interface.h"
 
 #include <stdio.h>
 #include <stdlib.h>

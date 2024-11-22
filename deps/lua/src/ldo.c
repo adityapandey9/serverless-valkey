@@ -6,7 +6,7 @@
 
 #include <wasi_compat.h>
 
-// #include <setjmp.h>
+#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{ .default_target = .{ .cpu_arch = .wasm32, .os_tag = .wasi } });
+    const target = b.standardTargetOptions(.{});
     const mode = b.standardOptimizeOption(.{});
 
     // Add dependencies
@@ -18,6 +18,14 @@ pub fn build(b: *std.Build) void {
             "deps/wasi_compat/wasi_compat.c",
         },
         .flags = &.{ "-std=gnu11", "-Wall", "-W", "-Wno-missing-field-initializers", "-Wstrict-prototypes", "-pedantic" },
+    });
+
+    const external_storage = b.addStaticLibrary(.{
+        .name = "external_storage",
+        .target = target,
+        .root_source_file = b.path("zig-src/commandStore//c_interface.zig"),
+        .optimize = mode,
+        // .pic = true,
     });
 
     const hiredis = b.addStaticLibrary(.{
@@ -133,212 +141,87 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    lua.custom_args = &.{ "-D_WASI_EMULATED_SIGNAL", "-lwasi-emulated-signal", "-D_WASI_EMULATED_PROCESS_CLOCKS", "-lwasi-emulated-process-clocks" };
+    // lua.custom_args = &.{ "-D_WASI_EMULATED_SIGNAL", "-lwasi-emulated-signal", "-D_WASI_EMULATED_PROCESS_CLOCKS", "-lwasi-emulated-process-clocks" };
 
-    // // Create valkey-cli executable
-    // const valkey_cli = b.addExecutable(.{
-    //     .name = "valkey-cli",
-    //     .target = target,
-    //     .optimize = mode,
-    //     .link_libc = true,
-    // });
-    // valkey_cli.linkLibC();
-    // valkey_cli.linkLibrary(hiredis);
-
-    // valkey_cli.addIncludePath(b.path("deps/hiredis"));
-    // valkey_cli.addIncludePath(b.path("deps/linenoise"));
-    // valkey_cli.addIncludePath(b.path("deps/lua/src"));
-    // valkey_cli.addIncludePath(b.path("deps/fpconv"));
-    // valkey_cli.addIncludePath(b.path("deps/hdr_histogram"));
-
-    // valkey_cli.addCSourceFiles(.{
-    //     .files = &.{
-    //         "src/strl.c",
-    //         "src/adlist.c",
-    //         "src/ae.c",
-    //         "src/anet.c",
-    //         "src/redisassert.c",
-    //         "src/cli_commands.c",
-    //         "src/cli_common.c",
-    //         "src/crc16.c",
-    //         "src/crc64.c",
-    //         "src/crcspeed.c",
-    //         "src/dict.c",
-    //         "src/monotonic.c",
-    //         "src/mt19937-64.c",
-    //         "src/valkey-cli.c",
-    //         "src/release.c",
-    //         "src/siphash.c",
-    //         "src/zmalloc.c",
-    //         "deps/linenoise/linenoise.c",
-    //     },
-    //     .flags = &.{
-    //         "-std=gnu11",
-    //         "-Wall",
-    //         "-W",
-    //         "-Wno-missing-field-initializers",
-    //         "-Wstrict-prototypes",
-    //         "-pedantic",
-    //     },
-    // });
-
-    // // Create valkey-server executable
-    // const valkey_server = b.addExecutable(.{
-    //     .name = "valkey-server",
-    //     .target = target,
-    //     .optimize = mode,
-    //     .link_libc = true,
-    //     // .use_lld = true,
-    // });
-    // valkey_server.linkLibC();
-    // valkey_server.linkLibrary(hiredis);
-    // valkey_server.linkLibrary(lua);
-    // valkey_server.linkLibrary(hrd_histogram);
-    // valkey_server.linkLibrary(fpconv);
-
-    // // Link the required system libraries
-    // valkey_server.linkSystemLibrary("m");
-    // valkey_server.linkSystemLibrary("dl");
-    // valkey_server.linkSystemLibrary("pthread");
-
-    // valkey_server.addIncludePath(b.path("deps/hiredis"));
-    // valkey_server.addIncludePath(b.path("deps/lua/src"));
-    // valkey_server.addIncludePath(b.path("deps/fpconv"));
-    // valkey_server.addIncludePath(b.path("deps/hdr_histogram"));
-
-    // valkey_server.addCSourceFiles(.{
-    //     .files = &.{
-    //         "src/adlist.c",
-    //         "src/quicklist.c",
-    //         "src/ae.c",
-    //         "src/anet.c",
-    //         "src/dict.c",
-    //         "src/server.c",
-    //         "src/sds.c",
-    //         "src/zmalloc.c",
-    //         "src/lzf_c.c",
-    //         "src/lzf_d.c",
-    //         "src/pqsort.c",
-    //         "src/zipmap.c",
-    //         "src/sha1.c",
-    //         "src/ziplist.c",
-    //         "src/release.c",
-    //         "src/networking.c",
-    //         "src/util.c",
-    //         "src/object.c",
-    //         "src/db.c",
-    //         "src/replication.c",
-    //         "src/rdb.c",
-    //         "src/t_string.c",
-    //         "src/t_list.c",
-    //         "src/t_set.c",
-    //         "src/t_zset.c",
-    //         "src/t_hash.c",
-    //         "src/config.c",
-    //         "src/aof.c",
-    //         "src/pubsub.c",
-    //         "src/multi.c",
-    //         "src/debug.c",
-    //         "src/sort.c",
-    //         "src/intset.c",
-    //         "src/syncio.c",
-    //         "src/cluster.c",
-    //         "src/crc16.c",
-    //         "src/endianconv.c",
-    //         "src/slowlog.c",
-    //         "src/eval.c",
-    //         "src/bio.c",
-    //         "src/rio.c",
-    //         "src/rand.c",
-    //         "src/memtest.c",
-    //         "src/syscheck.c",
-    //         "src/crcspeed.c",
-    //         "src/crc64.c",
-    //         "src/bitops.c",
-    //         "src/sentinel.c",
-    //         "src/notify.c",
-    //         "src/setproctitle.c",
-    //         "src/blocked.c",
-    //         "src/hyperloglog.c",
-    //         "src/latency.c",
-    //         "src/sparkline.c",
-    //         "src/valkey-check-rdb.c",
-    //         "src/valkey-check-aof.c",
-    //         "src/geo.c",
-    //         "src/lazyfree.c",
-    //         "src/module.c",
-    //         "src/evict.c",
-    //         "src/expire.c",
-    //         "src/geohash.c",
-    //         "src/geohash_helper.c",
-    //         "src/childinfo.c",
-    //         "src/defrag.c",
-    //         "src/siphash.c",
-    //         "src/rax.c",
-    //         "src/t_stream.c",
-    //         "src/listpack.c",
-    //         "src/localtime.c",
-    //         "src/lolwut.c",
-    //         "src/lolwut5.c",
-    //         "src/lolwut6.c",
-    //         "src/acl.c",
-    //         "src/tracking.c",
-    //         "src/socket.c",
-    //         "src/tls.c",
-    //         "src/sha256.c",
-    //         "src/timeout.c",
-    //         "src/setcpuaffinity.c",
-    //         "src/monotonic.c",
-    //         "src/mt19937-64.c",
-    //         "src/resp_parser.c",
-    //         "src/call_reply.c",
-    //         "src/script_lua.c",
-    //         "src/script.c",
-    //         "src/functions.c",
-    //         "src/function_lua.c",
-    //         "src/commands.c",
-    //         "src/strl.c",
-    //         "src/connection.c",
-    //         "src/unix.c",
-    //         "src/logreqres.c",
-    //     },
-    //     .flags = &.{
-    //         "-std=gnu11",
-    //         "-Wall",
-    //         "-W",
-    //         "-Wno-missing-field-initializers",
-    //         "-Wstrict-prototypes",
-    //         "-pedantic",
-    //     },
-    // });
-
-    const wasm_valkey = b.addExecutable(.{
-        .name = "wasm_valkey",
-        // .root_source_file = b.path("zig-src/root.zig"),
+    // Create valkey-cli executable
+    const valkey_cli = b.addExecutable(.{
+        .name = "valkey-cli",
         .target = target,
         .optimize = mode,
         .link_libc = true,
     });
+    valkey_cli.linkLibC();
+    valkey_cli.linkLibrary(hiredis);
+    valkey_cli.linkLibrary(wasi_compat);
 
-    wasm_valkey.linkLibC();
-    wasm_valkey.linkLibrary(hiredis);
-    wasm_valkey.linkLibrary(lua);
-    wasm_valkey.linkLibrary(hrd_histogram);
-    wasm_valkey.linkLibrary(fpconv);
-    wasm_valkey.linkLibrary(wasi_compat);
+    valkey_cli.addIncludePath(b.path("deps/hiredis"));
+    valkey_cli.addIncludePath(b.path("deps/linenoise"));
+    valkey_cli.addIncludePath(b.path("deps/lua/src"));
+    valkey_cli.addIncludePath(b.path("deps/fpconv"));
+    valkey_cli.addIncludePath(b.path("deps/hdr_histogram"));
+    valkey_cli.addIncludePath(b.path("deps/wasi_compat/"));
 
-    wasm_valkey.linkSystemLibrary("m");
-    wasm_valkey.linkSystemLibrary("dl");
-    wasm_valkey.linkSystemLibrary("pthread");
+    valkey_cli.addCSourceFiles(.{
+        .files = &.{
+            "src/strl.c",
+            "src/adlist.c",
+            "src/ae.c",
+            "src/anet.c",
+            "src/redisassert.c",
+            "src/cli_commands.c",
+            "src/cli_common.c",
+            "src/crc16.c",
+            "src/crc64.c",
+            "src/crcspeed.c",
+            "src/dict.c",
+            "src/monotonic.c",
+            "src/mt19937-64.c",
+            "src/valkey-cli.c",
+            "src/release.c",
+            "src/siphash.c",
+            "src/zmalloc.c",
+            "deps/linenoise/linenoise.c",
+        },
+        .flags = &.{
+            "-std=gnu11",
+            "-Wall",
+            "-W",
+            "-Wno-missing-field-initializers",
+            "-Wstrict-prototypes",
+            "-pedantic",
+        },
+    });
 
-    wasm_valkey.addIncludePath(b.path("deps/hiredis"));
-    wasm_valkey.addIncludePath(b.path("deps/lua/src"));
-    wasm_valkey.addIncludePath(b.path("deps/fpconv"));
-    wasm_valkey.addIncludePath(b.path("deps/hdr_histogram"));
-    wasm_valkey.addIncludePath(b.path("deps/wasi_compat/"));
-    // wasm_valkey.addIncludePath(b.path("src"));
+    // Create valkey-server executable
+    const valkey_server = b.addExecutable(.{
+        .name = "valkey-server",
+        .target = target,
+        .root_source_file = b.path("zig-src/root.zig"),
+        .optimize = mode,
+        .link_libc = true,
+        // .use_lld = true,
+    });
+    valkey_server.linkLibC();
+    valkey_server.linkLibrary(hiredis);
+    valkey_server.linkLibrary(lua);
+    valkey_server.linkLibrary(hrd_histogram);
+    valkey_server.linkLibrary(fpconv);
+    valkey_server.linkLibrary(wasi_compat);
+    valkey_server.linkLibrary(external_storage);
 
-    wasm_valkey.addCSourceFiles(.{
+    // Link the required system libraries
+    valkey_server.linkSystemLibrary("m");
+    valkey_server.linkSystemLibrary("dl");
+    valkey_server.linkSystemLibrary("pthread");
+
+    valkey_server.addIncludePath(b.path("deps/hiredis"));
+    valkey_server.addIncludePath(b.path("deps/lua/src"));
+    valkey_server.addIncludePath(b.path("deps/fpconv"));
+    valkey_server.addIncludePath(b.path("deps/hdr_histogram"));
+    valkey_server.addIncludePath(b.path("deps/wasi_compat/"));
+    valkey_server.addIncludePath(b.path("zig-src/commandStore"));
+
+    valkey_server.addCSourceFiles(.{
         .files = &.{
             "src/adlist.c",
             "src/quicklist.c",
@@ -444,10 +327,142 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    wasm_valkey.custom_args = &.{ "-D_WASI_EMULATED_GETPID", "-D_WASI_EMULATED_SIGNAL", "-lwasi-emulated-signal", "-D_WASI_EMULATED_PROCESS_CLOCKS", "-lwasi-emulated-process-clocks", "-D_WASI_EMULATED_MMAN", "-lwasi-emulated-mman" };
+    // const wasm_valkey = b.addExecutable(.{
+    //     .name = "wasm_valkey",
+    //     // .root_source_file = b.path("zig-src/root.zig"),
+    //     .target = target,
+    //     .optimize = mode,
+    //     .link_libc = true,
+    // });
+
+    // wasm_valkey.linkLibC();
+    // wasm_valkey.linkLibrary(hiredis);
+    // wasm_valkey.linkLibrary(lua);
+    // wasm_valkey.linkLibrary(hrd_histogram);
+    // wasm_valkey.linkLibrary(fpconv);
+    // wasm_valkey.linkLibrary(wasi_compat);
+
+    // wasm_valkey.linkSystemLibrary("m");
+    // wasm_valkey.linkSystemLibrary("dl");
+    // wasm_valkey.linkSystemLibrary("pthread");
+
+    // wasm_valkey.addIncludePath(b.path("deps/hiredis"));
+    // wasm_valkey.addIncludePath(b.path("deps/lua/src"));
+    // wasm_valkey.addIncludePath(b.path("deps/fpconv"));
+    // wasm_valkey.addIncludePath(b.path("deps/hdr_histogram"));
+    // wasm_valkey.addIncludePath(b.path("deps/wasi_compat/"));
+    // wasm_valkey.addIncludePath(b.path("src"));
+
+    // wasm_valkey.addCSourceFiles(.{
+    //     .files = &.{
+    //         "src/adlist.c",
+    //         "src/quicklist.c",
+    //         "src/ae.c",
+    //         "src/anet.c",
+    //         "src/dict.c",
+    //         "src/server.c",
+    //         "src/sds.c",
+    //         "src/zmalloc.c",
+    //         "src/lzf_c.c",
+    //         "src/lzf_d.c",
+    //         "src/pqsort.c",
+    //         "src/zipmap.c",
+    //         "src/sha1.c",
+    //         "src/ziplist.c",
+    //         "src/release.c",
+    //         "src/networking.c",
+    //         "src/util.c",
+    //         "src/object.c",
+    //         "src/db.c",
+    //         "src/replication.c",
+    //         "src/rdb.c",
+    //         "src/t_string.c",
+    //         "src/t_list.c",
+    //         "src/t_set.c",
+    //         "src/t_zset.c",
+    //         "src/t_hash.c",
+    //         "src/config.c",
+    //         "src/aof.c",
+    //         "src/pubsub.c",
+    //         "src/multi.c",
+    //         "src/debug.c",
+    //         "src/sort.c",
+    //         "src/intset.c",
+    //         "src/syncio.c",
+    //         "src/cluster.c",
+    //         "src/crc16.c",
+    //         "src/endianconv.c",
+    //         "src/slowlog.c",
+    //         "src/eval.c",
+    //         "src/bio.c",
+    //         "src/rio.c",
+    //         "src/rand.c",
+    //         "src/memtest.c",
+    //         "src/syscheck.c",
+    //         "src/crcspeed.c",
+    //         "src/crc64.c",
+    //         "src/bitops.c",
+    //         "src/sentinel.c",
+    //         "src/notify.c",
+    //         "src/setproctitle.c",
+    //         "src/blocked.c",
+    //         "src/hyperloglog.c",
+    //         "src/latency.c",
+    //         "src/sparkline.c",
+    //         "src/valkey-check-rdb.c",
+    //         "src/valkey-check-aof.c",
+    //         "src/geo.c",
+    //         "src/lazyfree.c",
+    //         "src/module.c",
+    //         "src/evict.c",
+    //         "src/expire.c",
+    //         "src/geohash.c",
+    //         "src/geohash_helper.c",
+    //         "src/childinfo.c",
+    //         "src/defrag.c",
+    //         "src/siphash.c",
+    //         "src/rax.c",
+    //         "src/t_stream.c",
+    //         "src/listpack.c",
+    //         "src/localtime.c",
+    //         "src/lolwut.c",
+    //         "src/lolwut5.c",
+    //         "src/lolwut6.c",
+    //         "src/acl.c",
+    //         "src/tracking.c",
+    //         "src/socket.c",
+    //         "src/tls.c",
+    //         "src/sha256.c",
+    //         "src/timeout.c",
+    //         "src/setcpuaffinity.c",
+    //         "src/monotonic.c",
+    //         "src/mt19937-64.c",
+    //         "src/resp_parser.c",
+    //         "src/call_reply.c",
+    //         "src/script_lua.c",
+    //         "src/script.c",
+    //         "src/functions.c",
+    //         "src/function_lua.c",
+    //         "src/commands.c",
+    //         "src/strl.c",
+    //         "src/connection.c",
+    //         "src/unix.c",
+    //         "src/logreqres.c",
+    //     },
+    //     .flags = &.{
+    //         "-std=gnu11",
+    //         "-Wall",
+    //         "-W",
+    //         "-Wno-missing-field-initializers",
+    //         "-Wstrict-prototypes",
+    //         "-pedantic",
+    //     },
+    // });
+
+    // wasm_valkey.custom_args = &.{ "-D_WASI_EMULATED_GETPID", "-D_WASI_EMULATED_SIGNAL", "-lwasi-emulated-signal", "-D_WASI_EMULATED_PROCESS_CLOCKS", "-lwasi-emulated-process-clocks", "-D_WASI_EMULATED_MMAN", "-lwasi-emulated-mman" };
 
     // Install artifacts
-    b.installArtifact(wasm_valkey);
-    // b.installArtifact(valkey_cli);
-    // b.installArtifact(valkey_server);
+    // b.installArtifact(wasm_valkey);
+    b.installArtifact(valkey_cli);
+    b.installArtifact(valkey_server);
 }
